@@ -1,7 +1,7 @@
 package risk
 
 import (
-	"github.com/bytedance/sonic"
+	"encoding/json"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"strings"
 	"time"
@@ -45,7 +45,7 @@ func (c *Cookie) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (c *Cookie) Peek() lua.LValue                       { return c }
 
 func (c *Cookie) Byte() []byte {
-	chunk, _ := sonic.Marshal(c)
+	chunk, _ := json.Marshal(c)
 	return chunk
 }
 

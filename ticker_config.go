@@ -24,8 +24,8 @@ type config struct {
 	output  lua.Writer
 	ignore  *cond.Ignore
 	filter  *cond.Combine
-	pipe    *pipe.Px
-	hook    *pipe.Px
+	pipe    *pipe.Chains
+	hook    *pipe.Chains
 }
 
 func newTickerConfig(L *lua.LState) *config {

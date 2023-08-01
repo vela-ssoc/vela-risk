@@ -6,7 +6,6 @@ import (
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/kind"
 	"github.com/vela-ssoc/vela-kit/lua"
-	"github.com/vela-ssoc/vela-kit/opcode"
 	"io"
 	"time"
 )
@@ -29,7 +28,8 @@ type Event struct {
 	Reference  string                `json:"reference"`
 	FromCode   string                `json:"from_code"`
 	Alert      bool                  `json:"alert"`
-	Metadata   map[string]lua.LValue `json:"-"`
+	Template   string                `json:"template"`
+	Metadata   map[string]lua.LValue `json:"metadata"`
 }
 
 func newEv() *Event {
@@ -155,8 +155,7 @@ func (ev *Event) Byte() []byte {
 }
 
 func (ev *Event) Send() {
-	chunk := ev.Byte()
-	err := xEnv.TnlSend(opcode.OpRisk, json.RawMessage(chunk))
+	err := xEnv.Push("/api/v1/broker/audit/risk", json.RawMessage(ev.Byte()))
 	if err != nil {
 		xEnv.Errorf("risk event %v send fail %v", ev, err)
 	}

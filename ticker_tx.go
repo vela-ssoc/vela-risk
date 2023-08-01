@@ -1,7 +1,7 @@
 package risk
 
 import (
-	"github.com/bytedance/sonic"
+	"encoding/json"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"io"
@@ -25,7 +25,7 @@ func (tx *Tx) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (tx *Tx) Peek() lua.LValue                       { return tx }
 
 func (tx *Tx) Byte() []byte {
-	chunk, _ := sonic.Marshal(tx)
+	chunk, _ := json.Marshal(tx)
 	return chunk
 }
 

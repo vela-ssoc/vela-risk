@@ -9,7 +9,7 @@ import (
 )
 
 func (tk *ticker) bucketL(L *lua.LState) int {
-	bPath := []string{"risk"}
+	var bPath []string
 	n := L.GetTop()
 	if n == 0 {
 		L.RaiseError("%s db got nil", tk.Name())

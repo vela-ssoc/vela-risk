@@ -178,6 +178,8 @@ func (ev *Event) NewIndex(L *lua.LState, key string, val lua.LValue) {
 		ev.Reference = val.String()
 	case "alert":
 		ev.Alert = lua.IsTrue(val)
+	case "template":
+		ev.Template = val.String()
 	}
 
 }

@@ -2,21 +2,25 @@ package risk
 
 import (
 	"context"
-	"github.com/vela-ssoc/vela-kit/vela"
 	"github.com/vela-ssoc/vela-kit/codec"
+	"github.com/vela-ssoc/vela-kit/vela"
 	"go.etcd.io/bbolt"
 	"time"
 )
 
 type dbHub struct {
+	bkt    []string
 	codec  codec.Mime
 	new    func(string) *Cookie
 	handle func(string, *Cookie, *Event)
-	db     vela.Bucket
+}
+
+func (hub *dbHub) db() vela.Bucket {
+	return xEnv.Bucket(hub.bkt...)
 }
 
 func (hub *dbHub) Del(id string) {
-	hub.db.Delete(id)
+	hub.db().Delete(id)
 }
 
 func (hub *dbHub) Set(id string, cookie *Cookie) {
@@ -28,11 +32,11 @@ func (hub *dbHub) Set(id string, cookie *Cookie) {
 	if err != nil {
 		return
 	}
-	hub.db.Push(id, data, 0)
+	hub.db().Push(id, data, 0)
 }
 
 func (hub *dbHub) Get(id string) *Cookie {
-	chunk, err := hub.db.Value(id)
+	chunk, err := hub.db().Value(id)
 	if err != nil {
 		xEnv.Debugf("%s find id fail %v", id, err)
 		return hub.new(id)
@@ -42,7 +46,7 @@ func (hub *dbHub) Get(id string) *Cookie {
 	err = hub.codec.Unmarshal(chunk, c)
 	if err != nil {
 		xEnv.Infof("%s cookie decode %s fail %v", id, string(chunk), err)
-		hub.db.Delete(id)
+		hub.db().Delete(id)
 		return hub.new(id)
 	}
 
@@ -64,7 +68,7 @@ func (hub *dbHub) DelBatch(v []string) {
 		return
 	}
 
-	hub.db.Batch(func(tx *bbolt.Tx, bbt *bbolt.Bucket) error {
+	hub.db().Batch(func(tx *bbolt.Tx, bbt *bbolt.Bucket) error {
 		for _, id := range v {
 			bbt.Delete([]byte(id))
 		}
@@ -76,7 +80,7 @@ func (hub *dbHub) SetBatch(val []Tx) {
 	if len(val) <= 0 {
 		return
 	}
-	db := hub.db
+	db := hub.db()
 	err := db.Batch(
 		func(tx *bbolt.Tx, bbt *bbolt.Bucket) error {
 			for _, tv := range val {
@@ -87,7 +91,7 @@ func (hub *dbHub) SetBatch(val []Tx) {
 
 				err = bbt.Put([]byte(tv.Id), chunk)
 				if err != nil {
-					xEnv.Errorf("%s put fail %v", hub.db.Names(), err)
+					xEnv.Errorf("%s put fail %v", hub.db().Names(), err)
 				}
 			}
 			return nil
@@ -102,7 +106,7 @@ func (hub *dbHub) SetBatch(val []Tx) {
 func (hub *dbHub) Range(over *bool) {
 	var deletes []string
 	var cookies []Tx
-	hub.db.ForEach(func(id string, chunk []byte) {
+	hub.db().ForEach(func(id string, chunk []byte) {
 		if *over {
 			return
 		}
@@ -147,7 +151,7 @@ func NewBucketHub(
 	handle func(string, *Cookie, *Event),
 ) *dbHub {
 	return &dbHub{
-		db:     xEnv.Bucket(bkt...),
+		bkt:    bkt,
 		new:    new,
 		codec:  codec.Sonic{},
 		handle: handle,
