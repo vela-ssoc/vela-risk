@@ -131,6 +131,29 @@ func (ev *Event) Leve(v string) {
 	}
 }
 
+func (ev *Event) Set(key string, lv lua.LValue) {
+	if ev.Metadata == nil {
+		ev.Metadata = make(map[string]lua.LValue, 8)
+	}
+	ev.Metadata[key] = lv
+}
+
+func (ev *Event) Mt() []byte {
+	if ev.Metadata == nil {
+		return nil
+	}
+
+	mt := kind.NewJsonEncoder()
+
+	mt.Tab("")
+	for key, val := range ev.Metadata {
+		mt.KV(key, val)
+	}
+	mt.End("}")
+
+	return mt.Bytes()
+}
+
 func (ev *Event) Byte() []byte {
 	enc := kind.NewJsonEncoder()
 	enc.Tab("")
@@ -150,6 +173,8 @@ func (ev *Event) Byte() []byte {
 	enc.KV("time", ev.Time)
 	enc.KV("from_code", ev.FromCode)
 	enc.KV("alert", ev.Alert)
+	enc.KV("template", ev.Template)
+	enc.Raw("metadata", ev.Mt())
 	enc.End("}")
 	return enc.Bytes()
 }

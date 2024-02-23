@@ -2,6 +2,7 @@ package risk
 
 func Brute(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = TBrute
 	ev.Alert = true
 	return ev
@@ -9,6 +10,7 @@ func Brute(ov ...func(*Event)) *Event {
 
 func HoneyPot(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = THoneyPot
 	ev.Alert = true
 	ev.Level = HIGH
@@ -17,6 +19,7 @@ func HoneyPot(ov ...func(*Event)) *Event {
 
 func WeakPass(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = TWeakPass
 	ev.Alert = true
 	return ev
@@ -24,6 +27,7 @@ func WeakPass(ov ...func(*Event)) *Event {
 
 func Crawler(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = TCrawler
 	ev.Alert = true
 	return ev
@@ -31,6 +35,7 @@ func Crawler(ov ...func(*Event)) *Event {
 
 func Virus(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = TVirus
 	ev.Alert = true
 	return ev
@@ -38,6 +43,7 @@ func Virus(ov ...func(*Event)) *Event {
 
 func Web(ov ...func(*Event)) *Event {
 	ev := NewEv(ov...)
+	ev.LocalIP = xEnv.Inet()
 	ev.Class = TWeb
 	ev.Alert = true
 	return ev

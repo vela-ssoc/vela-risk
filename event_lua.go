@@ -1,7 +1,7 @@
 package risk
 
 import (
-	auxlib2 "github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	vtime "github.com/vela-ssoc/vela-time"
@@ -15,17 +15,17 @@ func (ev *Event) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (ev *Event) Peek() lua.LValue                       { return ev }
 
 func (ev *Event) payloadL(L *lua.LState) int {
-	ev.Payload = auxlib2.Format(L, 0)
+	ev.Payload = auxlib.Format(L, 0)
 	return 0
 }
 
 func (ev *Event) subjectL(L *lua.LState) int {
-	ev.Subject = auxlib2.Format(L, 0)
+	ev.Subject = auxlib.Format(L, 0)
 	return 0
 }
 
 func (ev *Event) referenceL(L *lua.LState) int {
-	ev.Reference = auxlib2.Format(L, 0)
+	ev.Reference = auxlib.Format(L, 0)
 	return 0
 }
 
@@ -74,7 +74,7 @@ func (ev *Event) paramL(L *lua.LState) int {
 		if lv.Type() != lua.LTString {
 			return true
 		}
-		key, val := auxlib2.ParamLValue(lv.String())
+		key, val := auxlib.ParamLValue(lv.String())
 		ev.NewIndex(L, key, val)
 		return false
 	})
