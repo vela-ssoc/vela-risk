@@ -6,11 +6,51 @@ import (
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/kind"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/strutil"
 	"io"
+	"regexp"
 	"time"
 )
 
 var format = fmt.Sprintf
+
+var (
+	emc   = regexp.MustCompile("[0-9a-z]{3,8}")
+	mail  = regexp.MustCompile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+	phone = regexp.MustCompile("^1[3-9][0-9]{9}$")
+)
+
+type Ding struct {
+	Type string `json:"type"`
+	User string `json:"user"`
+	Mask string `json:"mask"`
+}
+
+func (d *Ding) Check() error {
+	switch d.Type {
+	case "emc":
+		if !emc.Match(strutil.S2B(d.User)) {
+			return fmt.Errorf("invalid emc %s", d.User)
+		}
+	case "mail":
+		if !mail.Match(strutil.S2B(d.User)) {
+			return fmt.Errorf("invalid mail %s", d.User)
+		}
+	case "sms":
+		if !mail.Match(strutil.S2B(d.User)) {
+			return fmt.Errorf("invalid phone %s", d.User)
+		}
+	case "phone":
+		if !phone.Match(strutil.S2B(d.User)) {
+			return fmt.Errorf("invalid phone %s", d.User)
+		}
+
+	default:
+		return fmt.Errorf("ding type %s", d.Type)
+	}
+
+	return nil
+}
 
 type Event struct {
 	MinionId   string                `json:"minion_id"`
@@ -30,6 +70,7 @@ type Event struct {
 	Alert      bool                  `json:"alert"`
 	Template   string                `json:"template"`
 	Metadata   map[string]lua.LValue `json:"metadata"`
+	Ding       []Ding                `json:"ding"`
 }
 
 func newEv() *Event {
@@ -154,6 +195,27 @@ func (ev *Event) Mt() []byte {
 	return mt.Bytes()
 }
 
+func (ev *Event) DingMarshal(enc *kind.JsonEncoder) {
+	enc.Arr("ding")
+	for _, d := range ev.Ding {
+		enc.KV("type", d.Type)
+		enc.KV("user", d.User)
+		enc.KV("mask", d.Mask)
+	}
+	enc.End("],")
+}
+
+func (ev *Event) SetDing(d Ding) {
+	n := len(ev.Ding)
+	for i := 0; i < n; i++ {
+		if ev.Ding[i].Type == d.Type && ev.Ding[i].User == d.User {
+			return
+		}
+	}
+
+	ev.Ding = append(ev.Ding, d)
+}
+
 func (ev *Event) Byte() []byte {
 	enc := kind.NewJsonEncoder()
 	enc.Tab("")
@@ -175,6 +237,7 @@ func (ev *Event) Byte() []byte {
 	enc.KV("alert", ev.Alert)
 	enc.KV("template", ev.Template)
 	enc.Raw("metadata", ev.Mt())
+	ev.DingMarshal(enc)
 	enc.End("}")
 	return enc.Bytes()
 }

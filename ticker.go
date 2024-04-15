@@ -45,7 +45,7 @@ func (tk *ticker) Start() error {
 
 	ctx, kill := context.WithCancel(context.Background())
 
-	go tk.hub.Poll(ctx, 1)
+	go tk.hub.Poll(ctx, 1, tk.cfg.expire)
 
 	tk.ctx = ctx
 	tk.kill = kill

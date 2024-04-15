@@ -200,6 +200,9 @@ local function alarm(tx , id , cond)
       alert     = true,
       level     = "高危",
     }    
+    r_ev.ding("emc:140996:张三" ,  -- 格式  通知类型:号码:备注
+              "emc:12200:李四" ,   
+              "mail:1@a.com:证券")
     
     r_ev.send() 
     debug("cookie:%v\nid:%d\ncond:%s" , pretty(tx) , id , cond)

@@ -3,8 +3,11 @@ package risk
 import (
 	"fmt"
 	"github.com/valyala/fasttemplate"
+	cond "github.com/vela-ssoc/vela-cond"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
+	vswitch "github.com/vela-ssoc/vela-switch"
+	"strconv"
 	"strings"
 )
 
@@ -191,53 +194,74 @@ func (tk *ticker) referenceL(L *lua.LState) int {
 	return 0
 }
 
+func (tk *ticker) afterL(L *lua.LState) int {
+	n := L.IsInt(1)
+	if n <= 0 {
+		L.RaiseError("not allow after 0")
+		return 0
+	}
+
+	cnd := cond.New("after > " + strconv.Itoa(n))
+	c := vswitch.NewCase(vswitch.WithCnd(cnd))
+
+	tk.cfg.vsh.Append(c)
+	L.Push(c)
+	return 1
+}
+
+func (tk *ticker) countL(L *lua.LState) int {
+	n := L.IsInt(1)
+	if n <= 0 {
+		L.RaiseError("not allow count 0")
+		return 0
+	}
+
+	cnd := cond.New("count > " + strconv.Itoa(n))
+	c := vswitch.NewCase(vswitch.WithCnd(cnd))
+
+	tk.cfg.vsh.Append(c)
+	L.Push(c)
+	return 1
+}
+
 func (tk *ticker) Index(L *lua.LState, key string) lua.LValue {
 	switch key {
 	case "db":
 		return lua.NewFunction(tk.bucketL)
-
 	case "db_memory":
 		return lua.NewFunction(tk.memoryL)
 	case "level":
 		return lua.NewFunction(tk.levelL)
-
 	case "class":
 		return lua.NewFunction(tk.classL)
-
 	case "subject":
 		return lua.NewFunction(tk.subjectL)
-
 	case "pay":
 		return lua.NewFunction(tk.payload)
-
 	case "case":
 		return tk.cfg.vsh.Index(L, "case")
-
 	case "alert":
 		return lua.GoFuncErr(tk.alertL)
 	case "drop":
 		return lua.GoFuncErr(tk.dropL)
-
 	case "by":
 		return lua.NewFunction(tk.byL)
-
 	case "hook":
 		return lua.NewFunction(tk.hookL)
-
 	case "push":
 		return lua.NewFunction(tk.pushL)
-
 	case "event":
 		return lua.NewFunction(tk.eventL)
-
 	case "pipe":
 		return lua.NewFunction(tk.pipeL)
-
 	case "reference":
 		return lua.NewFunction(tk.referenceL)
-
 	case "start":
 		return lua.NewFunction(tk.startL)
+	case "after":
+		return lua.NewFunction(tk.afterL)
+	case "count":
+		return lua.NewFunction(tk.countL)
 	}
 
 	return lua.LNil

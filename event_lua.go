@@ -5,6 +5,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	vtime "github.com/vela-ssoc/vela-time"
+	"strings"
 )
 
 func (ev *Event) String() string                         { return lua.B2S(ev.Byte()) }
@@ -59,6 +60,39 @@ func (ev *Event) metadataL(L *lua.LState) int {
 		ev.Metadata = make(map[string]lua.LValue, 8)
 	}
 	ev.Metadata[key] = val
+	return 0
+}
+
+func (ev *Event) dingL(L *lua.LState) int { // "emc:123123:张三" , "emc:123123:李四" , "mail:aa@qq.com:证券"
+	L.Callback(func(lv lua.LValue) bool {
+		if lv.Type() != lua.LTString {
+			return true
+		}
+
+		tab := strings.SplitN(lv.String(), ":", 3)
+		n := len(tab)
+		var ding Ding
+		switch n {
+		case 2:
+			ding.Type = tab[0]
+			ding.User = tab[1]
+		case 3:
+			ding.Type = tab[0]
+			ding.User = tab[1]
+			ding.User = tab[2]
+		default:
+			L.RaiseError("bad argument size must 2 or 3 , got %d", n)
+			return true
+		}
+
+		if e := ding.Check(); e != nil {
+			L.RaiseError("check ding fail %v", e)
+			return true
+		}
+
+		ev.SetDing(ding)
+		return false
+	})
 	return 0
 }
 
@@ -134,6 +168,8 @@ func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 		return lua.NewFunction(ev.toL)
 	case "metadata":
 		return lua.NewFunction(ev.metadataL)
+	case "ding":
+		return lua.NewFunction(ev.dingL)
 
 	default:
 		if v, ok := ev.Metadata[key]; ok {

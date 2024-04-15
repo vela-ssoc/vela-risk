@@ -38,7 +38,7 @@ func (hub *dbHub) Set(id string, cookie *Cookie) {
 func (hub *dbHub) Get(id string) *Cookie {
 	chunk, err := hub.db().Value(id)
 	if err != nil {
-		xEnv.Debugf("%s find id fail %v", id, err)
+		//xEnv.Debugf("%s find id fail %v", id, err)
 		return hub.new(id)
 	}
 
@@ -103,9 +103,10 @@ func (hub *dbHub) SetBatch(val []Tx) {
 	}
 }
 
-func (hub *dbHub) Range(over *bool) {
+func (hub *dbHub) Range(over *bool, ttl int64) {
 	var deletes []string
 	var cookies []Tx
+	now := time.Now().Unix()
 	hub.db().ForEach(func(id string, chunk []byte) {
 		if *over {
 			return
@@ -116,9 +117,15 @@ func (hub *dbHub) Range(over *bool) {
 			return
 		}
 
+		if ttl > 0 && now-cookie.Last > ttl {
+			deletes = append(deletes, id)
+			return
+		}
+
 		hub.call(id, &cookie, nil)
 		if cookie.Is(Delete) {
 			deletes = append(deletes, id)
+			return
 		}
 
 		if cookie.save {
@@ -130,7 +137,7 @@ func (hub *dbHub) Range(over *bool) {
 	hub.SetBatch(cookies)
 }
 
-func (hub *dbHub) Poll(ctx context.Context, tv int) {
+func (hub *dbHub) Poll(ctx context.Context, tv int, ttl int64) {
 	tk := time.NewTicker(time.Duration(tv) * time.Second)
 	defer tk.Stop()
 
@@ -140,7 +147,7 @@ func (hub *dbHub) Poll(ctx context.Context, tv int) {
 		case <-ctx.Done():
 			return
 		case <-tk.C:
-			hub.Range(&over)
+			hub.Range(&over, ttl)
 		}
 	}
 }

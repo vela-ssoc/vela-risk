@@ -145,12 +145,11 @@ func (c *Cookie) payloadL(L *lua.LState) int {
 
 func (c *Cookie) setL(L *lua.LState) int {
 	key := L.IsString(1)
-	val := L.IsString(2)
+	val := L.Get(2)
 	if len(key) == 0 {
 		return 0
 	}
-
-	c.Set(key, val)
+	c.Set(key, val.String())
 	return 0
 }
 
@@ -163,6 +162,36 @@ func (c *Cookie) saveL(L *lua.LState) int {
 
 	c.saveFn()
 	return 0
+}
+func (c *Cookie) keysL(L *lua.LState) *lua.LTable {
+
+	keys := L.CreateTable(len(c.Data), 0)
+	idx := 1
+	for key, _ := range c.Data {
+		keys.RawSetInt(idx, lua.S2L(key))
+		idx++
+	}
+
+	return keys
+}
+
+func (c *Cookie) itemsL(L *lua.LState) *lua.LTable {
+	items := L.CreateTable(len(c.Data), 0)
+	idx := 1
+	for _, val := range c.Data {
+		items.RawSetInt(idx, lua.S2L(val))
+		idx++
+	}
+	return items
+}
+
+func (c *Cookie) metadataL(L *lua.LState) *lua.Map {
+	m := lua.NewMap(len(c.Data), false)
+
+	for k, v := range c.Data {
+		m.Set(k, lua.S2L(v))
+	}
+	return m
 }
 
 func (c *Cookie) Index(L *lua.LState, key string) lua.LValue {
@@ -179,12 +208,21 @@ func (c *Cookie) Index(L *lua.LState, key string) lua.LValue {
 		now := time.Now().Unix()
 		after := now - c.Last
 		return lua.LInt(after)
+
 	case "pay":
 		return lua.NewFunction(c.payloadL)
 	case "set":
 		return lua.NewFunction(c.setL)
 	case "save":
 		return lua.NewFunction(c.saveL)
+	case "keys":
+		return c.keysL(L)
+
+	case "items":
+		return c.itemsL(L)
+	case "all":
+		return c.metadataL(L)
+
 	default:
 		return lua.S2L(c.Data[key])
 	}

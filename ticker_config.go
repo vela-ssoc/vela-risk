@@ -26,6 +26,7 @@ type config struct {
 	filter  *cond.Combine
 	pipe    *pipe.Chains
 	hook    *pipe.Chains
+	expire  int64
 }
 
 func newTickerConfig(L *lua.LState) *config {
@@ -39,12 +40,8 @@ func newTickerConfig(L *lua.LState) *config {
 		filter: cond.NewCombine(),
 		vsh:    vswitch.NewL(L),
 		pipe:   pipe.New(pipe.Env(xEnv)),
+		expire: int64(L.IsInt(2)),
 	}
-
-	//tab := L.CheckTable(1)
-	//tab.Range(func(s string, val lua.LValue) {
-	//	cfg.NewIndex(L, s, val)
-	//})
 
 	return cfg
 }
